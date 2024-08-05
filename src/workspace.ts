@@ -1,10 +1,10 @@
 import { $, Glob } from 'bun';
-import { exec } from 'child_process';
-import { promises as fs } from 'fs';
-import path from 'path';
-import { promisify } from 'util';
-// Gotta import stuff directly from source, because this is used in a script.
-import * as TypeCheck from './modules/agnostic/typechk/src/TypeChk.ts';
+import { exec } from 'node:child_process';
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
+import { promisify } from 'node:util';
+// This works because we bundle the thing up before publishing it
+import * as TypeCheck from '@freik/typechk';
 
 // Needed to work around a windows bugs :(
 const execP = promisify(exec);
@@ -63,7 +63,7 @@ function workspaceDeps(deps: { [key: string]: string }): string[] {
   return Object.keys(deps).filter((dep) => deps[dep].startsWith('workspace:'));
 }
 
-const depKeys = [
+const depKeys: { name: string; key: 'direct' | 'dev' | 'peer' }[] = [
   { name: 'dependencies', key: 'direct' },
   { name: 'devDependencies', key: 'dev' },
   { name: 'peerDependencies', key: 'peer' },
@@ -165,7 +165,8 @@ function calcDependencyGraph(modules: Module[]): DependencyGraph {
 
 // This has an issue with peer dependencies.
 // It should probably schedule them at the same time, but if there's a circular
-// dependency, it get's stuck.
+// dependency, it get's stuck. I think to handle them properly, I'd need to add
+// a peer kind of dependency. I think I'll just punt on that for now.
 async function scheduler(args: string[]): Promise<void> {
   const modules = await getModules();
   const moduleMap = new Map<string, Module>(modules.map((m) => [m.name, m]));
@@ -225,7 +226,7 @@ async function doit(
 ): Promise<string> {
   // This doesn't seem to work on windows, so I have to use Node-compatible stuff :(
   if (process.argv.length == 0) {
-    await $`${{ raw: cmds.map((v) => $.escape(v)).join(' ') }}`.cwd(filepath);
+    // await $`${{ raw: cmds.map((v) => $.escape(v)).join(' ') }}`.cwd(filepath);
   } else {
     const command = cmds.map((v) => $.escape(v)).join(' ');
     const res = await execP(command, { cwd: filepath });

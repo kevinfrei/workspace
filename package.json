@@ -1,15 +1,27 @@
 {
-  "name": "workspace",
+  "name": "@freik/workspace",
+  "version": "0.0.1",
   "module": "src/index.ts",
   "type": "module",
+  "files": [
+    "lib/*.js"
+  ],
+  "bin": {
+    "workspace": "lib/workspace.js"
+  },
   "devDependencies": {
+    "@freik/typechk": "^0.6.0",
     "@types/bun": "latest",
     "husky": "^9.1.2",
     "prettier": "^3.3.3",
     "typescript": "^5.5.4"
   },
   "scripts": {
+    "build": "bun build --outdir lib --minify --target bun src/workspace.ts",
+    "dbgbuild": "bun build --outdir lib --target bun src/workspace.ts",
     "format": "prettier --write *.json *.md src/**/*.ts",
-    "prepare": "husky"
+    "prepare": "husky",
+    "prepublishOnly": "bun run build",
+    "types": "tsc --noEmit"
   }
 }
