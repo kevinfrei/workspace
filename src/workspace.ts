@@ -1,3 +1,4 @@
+#!/usr/bin/env bun
 import { $, Glob } from 'bun';
 import { exec } from 'node:child_process';
 import { promises as fs } from 'node:fs';
