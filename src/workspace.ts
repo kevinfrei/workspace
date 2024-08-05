@@ -96,8 +96,15 @@ async function readModule(pkgFile: string): Promise<Module> {
       throw new Error(`${depId.name} field must be an object of strings`);
     }
     workspaceDeps(pkg[depId.name]).forEach((k) => {
-      requires.add(k);
-      (deps[depId.key] as Set<string>).add(k);
+      deps[depId.key].add(k);
+      // TODO: What to do with peer dependencies?
+      // They're not really dependencies in the "I can't work if I don't have
+      // this already built" kind of dependency, but they are still required to
+      // be installed. Should I have barriers before and/or after peer
+      // dependencies that exist in the same overall workspace?
+      if (depId.key !== 'peer') {
+        requires.add(k);
+      }
     });
   }
   const direct = deps.direct.size ? deps.direct : undefined;
@@ -207,8 +214,6 @@ async function scheduler(args: string[]): Promise<void> {
         } else {
           throw new Error('Invalid dependency graph detected');
         }
-
-        // TODO: CONTINUE HERE
       }
       // Now wait on all of the remaining resolve tasks (recursion is fun!)
       if (newlyReady.length) {
@@ -216,6 +221,11 @@ async function scheduler(args: string[]): Promise<void> {
       }
     }
   }
+  // TODO: Allow multi-phase tasks. This is basically a 'second dimension'
+  // for the dependency graph. It would allow lots of stuff to get done
+  // sooner (once an root has finished task 1, it can do task 2, while
+  // scheduling task 1 for it's dependents)
+
   // Seed the recursion with the initially ready tasks.
   await Promise.all(ready.map((dep) => runTask(dep)));
 }
