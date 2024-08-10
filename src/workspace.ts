@@ -5,9 +5,10 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { promisify } from 'node:util';
 import minimist from 'minimist';
-
 // This works because we bundle the thing up before publishing it
 import * as TypeCheck from '@freik/typechk';
+
+type JsonType = { [key: string]: TypeCheck.SimpleObject };
 
 // Needed to work around a windows bugs :(
 const execP = promisify(exec);
@@ -17,7 +18,8 @@ type Module = {
   name: string;
   location: string;
   requires: string[];
-  packageJson: JSON;
+  packageJson: JsonType;
+  version: string;
   dev?: Set<string>;
   peer?: Set<string>;
   direct?: Set<string>;
@@ -28,7 +30,7 @@ type ModuleResolutionNode = Module & {
 };
 
 // Just read a JSON text file, and return the JSON object.
-async function readJson(filename: string): Promise<JSON> {
+async function readJson(filename: string): Promise<JsonType> {
   const pkg = (await fs.readFile(filename)).toString();
   return JSON.parse(pkg);
 }
@@ -77,13 +79,15 @@ const depKeys: { name: string; key: 'direct' | 'dev' | 'peer' }[] = [
 async function readModule(pkgFile: string): Promise<Module> {
   const pkg = await readJson(pkgFile);
   const requires = new Set<string>();
-  if (!TypeCheck.hasFieldType(pkg, 'name', TypeCheck.isString)) {
+  if (!TypeCheck.hasStrField(pkg, 'name')) {
     throw new Error('name field must be a string');
   }
+  const version = TypeCheck.hasStrField(pkg, 'version') ? pkg.version : '0.0.1';
   const module: Module = {
     name: pkg.name,
     location: path.dirname(pkgFile),
     packageJson: pkg,
+    version,
     requires: [],
   };
   const deps = {
@@ -255,6 +259,34 @@ async function doit(
 
 async function ChangeInternalDeps(setToVersion: boolean): Promise<void> {
   const modules = await getModules();
+  const moduleMap = new Map<string, Module>(modules.map((m) => [m.name, m]));
+
+  function UpdatedDepField(pkg: JsonType, key: string): void {
+    if (TypeCheck.hasFieldType(pkg, key, TypeCheck.isObjectOfString)) {
+      const deps = { ...pkg[key] };
+      Object.keys(pkg[key]).forEach((k) => {
+        const dep = moduleMap.get(k);
+        if (!TypeCheck.isUndefined(dep)) {
+          deps[k] = setToVersion ? dep.version : 'workspace:*';
+        }
+      });
+      pkg[key] = deps;
+    }
+  }
+
+  await Promise.all(
+    modules.map(async (mod) => {
+      const pkg = mod.packageJson;
+      // Set (or clear) the 'dependencies' entries.
+      UpdatedDepField(pkg, 'dependencies');
+      UpdatedDepField(pkg, 'devDependencies');
+      UpdatedDepField(pkg, 'peerDependencies');
+      await fs.writeFile(
+        path.join(mod.location, 'package.json'),
+        JSON.stringify(pkg, null, 2) + '\n',
+      );
+    }),
+  );
 }
 
 // TODO: Handle filtering
@@ -267,8 +299,11 @@ async function main(args: string[]): Promise<void> {
       c: 'cutWorkspaceDeps',
     },
   });
-  if (TypeCheck.hasField(parse, 'f') || TypeCheck.hasField(parse, 'c')) {
-    await ChangeInternalDeps(!!parse.f);
+  const setToVersion = TypeCheck.hasField(parse, 'f') && parse.f !== false;
+  const clearVersion = TypeCheck.hasField(parse, 'c') && parse.c !== false;
+  if (setToVersion || clearVersion) {
+    await ChangeInternalDeps(setToVersion);
+    return;
   }
 
   if (TypeCheck.hasField(parse, 'p') && parse.b) {
