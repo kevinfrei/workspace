@@ -10,9 +10,11 @@
     "workspace": "lib/workspace.js"
   },
   "devDependencies": {
-    "@freik/typechk": "^0.6.0",
-    "@types/bun": "latest",
-    "husky": "^9.1.2",
+    "@freik/typechk": "^0.6.1",
+    "@types/bun": "^1.1.6",
+    "@types/minimist": "^1.2.5",
+    "husky": "^9.1.4",
+    "minimist": "^1.2.8",
     "prettier": "^3.3.3",
     "typescript": "^5.5.4"
   },

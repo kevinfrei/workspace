@@ -4,6 +4,8 @@ import { exec } from 'node:child_process';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { promisify } from 'node:util';
+import minimist from 'minimist';
+
 // This works because we bundle the thing up before publishing it
 import * as TypeCheck from '@freik/typechk';
 
@@ -15,6 +17,7 @@ type Module = {
   name: string;
   location: string;
   requires: string[];
+  packageJson: JSON;
   dev?: Set<string>;
   peer?: Set<string>;
   direct?: Set<string>;
@@ -80,6 +83,7 @@ async function readModule(pkgFile: string): Promise<Module> {
   const module: Module = {
     name: pkg.name,
     location: path.dirname(pkgFile),
+    packageJson: pkg,
     requires: [],
   };
   const deps = {
@@ -249,19 +253,31 @@ async function doit(
   return name;
 }
 
+async function ChangeInternalDeps(setToVersion: boolean): Promise<void> {
+  const modules = await getModules();
+}
+
 // TODO: Handle filtering
 async function main(args: string[]): Promise<void> {
-  if (
-    args.length > 0 &&
-    (args[0] === '--no-deps' || args[0] === '--parallel')
-  ) {
+  const parse = minimist(args, {
+    boolean: ['p', 'f', 'c'],
+    alias: {
+      p: ['parallel', 'noDeps'],
+      f: 'fixWorkspaceDeps',
+      c: 'cutWorkspaceDeps',
+    },
+  });
+  if (TypeCheck.hasField(parse, 'f') || TypeCheck.hasField(parse, 'c')) {
+    await ChangeInternalDeps(!!parse.f);
+  }
+
+  if (TypeCheck.hasField(parse, 'p') && parse.b) {
     const modules = await getModules();
-    const fewerArgs = args.slice(1);
     await Promise.all(
-      modules.map((mod) => doit(mod.name, mod.location, fewerArgs)),
+      modules.map((mod) => doit(mod.name, mod.location, parse._)),
     );
   } else {
-    await scheduler(args);
+    await scheduler(parse._);
   }
 }
 
