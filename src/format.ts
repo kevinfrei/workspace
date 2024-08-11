@@ -81,14 +81,11 @@ async function formatGroup(grp: string[] | undefined, fmtCommand: string) {
         grpRes = await execp(`${fmtCommand}${file}`);
       } catch (e) {
         console.error(e);
-
         console.error(file);
-
         console.error(fileLists);
       }
       if (grpRes !== undefined) {
         console.log(grpRes.stdout);
-
         console.error(grpRes.stderr);
       }
     }

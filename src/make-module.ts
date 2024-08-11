@@ -1,7 +1,9 @@
 import * as esbuild from 'esbuild';
 import { promises as fs } from 'fs';
-import minimist, { Opts as MinimistOpts } from 'minimist';
+import minimist from 'minimist';
 import * as ts from 'typescript';
+
+import type { Opts as MinimistOpts } from 'minimist';
 
 type ModuleArgs = {
   moduleType: 'esm' | 'cjs' | 'dual';

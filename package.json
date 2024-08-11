@@ -1,6 +1,6 @@
 {
   "name": "@freik/workspace",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "module": "src/index.ts",
   "type": "module",
   "files": [
@@ -14,16 +14,16 @@
     "@types/bun": "^1.1.6",
     "@types/minimist": "^1.2.5",
     "husky": "^9.1.4",
-    "minimist": "^1.2.8",
-    "prettier": "^3.3.3"
+    "minimist": "^1.2.8"
   },
   "peerDependencies": {
     "esbuild": "^0.23.0",
+    "prettier": "^3.3.3",
     "typescript": "^5.5.4"
   },
   "scripts": {
-    "build": "bun build --outdir lib --minify --external typescript --external esbuild --target bun src/tools.ts",
-    "dbgbuild": "bun build --outdir lib --external typescript --external esbuild --target bun src/tools.ts",
+    "build": "bun build --outdir lib --minify --external prettier --external typescript --external esbuild --target bun src/tools.ts",
+    "dbgbuild": "bun build --outdir lib --external prettier --external typescript --external esbuild --target bun src/tools.ts",
     "format": "prettier --write *.json *.md src/**/*.ts",
     "prepare": "husky",
     "prepublishOnly": "bun run build",
