@@ -1,4 +1,3 @@
-#!/usr/bin/env bun
 import { $, Glob } from 'bun';
 import { exec } from 'node:child_process';
 import { promises as fs } from 'node:fs';
@@ -290,20 +289,31 @@ async function ChangeInternalDeps(setToVersion: boolean): Promise<void> {
 }
 
 // TODO: Handle filtering
-async function main(args: string[]): Promise<void> {
+export async function workspaceTool(args: string[]): Promise<number> {
   const parse = minimist(args, {
-    boolean: ['p', 'f', 'c'],
+    boolean: ['p', 'f', 'c', 'h'],
     alias: {
       p: ['parallel', 'noDeps'],
       f: 'fixWorkspaceDeps',
       c: 'cutWorkspaceDeps',
+      h: 'help',
     },
   });
+  if (TypeCheck.hasField(parse, 'h')) {
+    console.log(
+      'Usage: bun run tools workspace [options] [command] [args...]\n' +
+        '  -p, --parallel, --noDeps  Run inparallel instead of dependency order.\n' +
+        '  -f, --fixWorkspaceDeps    Set all workspace dependencies to numeric.\n' +
+        '  -c, --cutWorkspaceDeps    Set workspace dependencies to generic.\n' +
+        '  -h, --help                Show this help message.\n',
+    );
+    return 0;
+  }
   const setToVersion = TypeCheck.hasField(parse, 'f') && parse.f !== false;
   const clearVersion = TypeCheck.hasField(parse, 'c') && parse.c !== false;
   if (setToVersion || clearVersion) {
     await ChangeInternalDeps(setToVersion);
-    return;
+    return 0;
   }
 
   if (TypeCheck.hasField(parse, 'p') && parse.b) {
@@ -314,8 +324,5 @@ async function main(args: string[]): Promise<void> {
   } else {
     await scheduler(parse._);
   }
+  return 0;
 }
-
-main(process.argv.slice(2))
-  .catch((e) => console.error('Error', e))
-  .finally(() => console.log('Done'));

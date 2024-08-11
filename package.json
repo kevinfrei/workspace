@@ -1,13 +1,13 @@
 {
   "name": "@freik/workspace",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "module": "src/index.ts",
   "type": "module",
   "files": [
     "lib/*.js"
   ],
   "bin": {
-    "workspace": "lib/workspace.js"
+    "tools": "lib/tools.js"
   },
   "devDependencies": {
     "@freik/typechk": "^0.6.1",
@@ -15,12 +15,15 @@
     "@types/minimist": "^1.2.5",
     "husky": "^9.1.4",
     "minimist": "^1.2.8",
-    "prettier": "^3.3.3",
+    "prettier": "^3.3.3"
+  },
+  "peerDependencies": {
+    "esbuild": "^0.23.0",
     "typescript": "^5.5.4"
   },
   "scripts": {
-    "build": "bun build --outdir lib --minify --target bun src/workspace.ts",
-    "dbgbuild": "bun build --outdir lib --target bun src/workspace.ts",
+    "build": "bun build --outdir lib --minify --external typescript --external esbuild --target bun src/tools.ts",
+    "dbgbuild": "bun build --outdir lib --external typescript --external esbuild --target bun src/tools.ts",
     "format": "prettier --write *.json *.md src/**/*.ts",
     "prepare": "husky",
     "prepublishOnly": "bun run build",
