@@ -4,10 +4,17 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { promisify } from 'node:util';
 import minimist from 'minimist';
-// This works because we bundle the thing up before publishing it
-import * as TypeCheck from '@freik/typechk';
+import {
+  hasField,
+  hasFieldType,
+  hasStrField,
+  isArrayOfString,
+  isObjectOfString,
+  isUndefined,
+  type SimpleObject,
+} from '@freik/typechk';
 
-type JsonType = { [key: string]: TypeCheck.SimpleObject };
+type JsonType = { [key: string]: SimpleObject };
 
 // Needed to work around a windows bugs :(
 const execP = promisify(exec);
@@ -37,13 +44,7 @@ async function readJson(filename: string): Promise<JsonType> {
 // Get the list of workspaces, and returns the list of matching directories that contain package.json files.
 async function getProjects(): Promise<string[]> {
   const topLevelPkg = await readJson('package.json');
-  if (
-    !TypeCheck.hasFieldType(
-      topLevelPkg,
-      'workspaces',
-      TypeCheck.isArrayOfString,
-    )
-  ) {
+  if (!hasFieldType(topLevelPkg, 'workspaces', isArrayOfString)) {
     throw new Error('workspaces field must be an array of strings');
   }
   const workspaces = topLevelPkg.workspaces;
@@ -78,10 +79,10 @@ const depKeys: { name: string; key: 'direct' | 'dev' | 'peer' }[] = [
 async function readModule(pkgFile: string): Promise<Module> {
   const pkg = await readJson(pkgFile);
   const requires = new Set<string>();
-  if (!TypeCheck.hasStrField(pkg, 'name')) {
+  if (!hasStrField(pkg, 'name')) {
     throw new Error('name field must be a string');
   }
-  const version = TypeCheck.hasStrField(pkg, 'version') ? pkg.version : '0.0.1';
+  const version = hasStrField(pkg, 'version') ? pkg.version : '0.0.1';
   const module: Module = {
     name: pkg.name,
     location: path.dirname(pkgFile),
@@ -96,10 +97,10 @@ async function readModule(pkgFile: string): Promise<Module> {
   };
 
   for (const depId of depKeys) {
-    if (!TypeCheck.hasField(pkg, depId.name)) {
+    if (!hasField(pkg, depId.name)) {
       continue;
     }
-    if (!TypeCheck.hasFieldType(pkg, depId.name, TypeCheck.isObjectOfString)) {
+    if (!hasFieldType(pkg, depId.name, isObjectOfString)) {
       throw new Error(`${depId.name} field must be an object of strings`);
     }
     workspaceDeps(pkg[depId.name]).forEach((k) => {
@@ -261,11 +262,11 @@ async function ChangeInternalDeps(setToVersion: boolean): Promise<void> {
   const moduleMap = new Map<string, Module>(modules.map((m) => [m.name, m]));
 
   function UpdatedDepField(pkg: JsonType, key: string): void {
-    if (TypeCheck.hasFieldType(pkg, key, TypeCheck.isObjectOfString)) {
+    if (hasFieldType(pkg, key, isObjectOfString)) {
       const deps = { ...pkg[key] };
       Object.keys(pkg[key]).forEach((k) => {
         const dep = moduleMap.get(k);
-        if (!TypeCheck.isUndefined(dep)) {
+        if (!isUndefined(dep)) {
           deps[k] = setToVersion ? dep.version : 'workspace:*';
         }
       });
@@ -299,7 +300,7 @@ export async function workspaceTool(args: string[]): Promise<number> {
       h: 'help',
     },
   });
-  if (TypeCheck.hasField(parse, 'h')) {
+  if (hasField(parse, 'h')) {
     console.log(
       'Usage: bun run tools workspace [options] [command] [args...]\n' +
         '  -p, --parallel, --noDeps  Run inparallel instead of dependency order.\n' +
@@ -309,14 +310,14 @@ export async function workspaceTool(args: string[]): Promise<number> {
     );
     return 0;
   }
-  const setToVersion = TypeCheck.hasField(parse, 'f') && parse.f !== false;
-  const clearVersion = TypeCheck.hasField(parse, 'c') && parse.c !== false;
+  const setToVersion = hasField(parse, 'f') && parse.f !== false;
+  const clearVersion = hasField(parse, 'c') && parse.c !== false;
   if (setToVersion || clearVersion) {
     await ChangeInternalDeps(setToVersion);
     return 0;
   }
 
-  if (TypeCheck.hasField(parse, 'p') && parse.b) {
+  if (hasField(parse, 'p') && parse.p !== false) {
     const modules = await getModules();
     await Promise.all(
       modules.map((mod) => doit(mod.name, mod.location, parse._)),
