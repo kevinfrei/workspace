@@ -292,28 +292,35 @@ async function ChangeInternalDeps(setToVersion: boolean): Promise<void> {
 // TODO: Handle filtering
 export async function workspaceTool(args: string[]): Promise<number> {
   const parse = minimist(args, {
-    boolean: ['p', 'f', 'c', 'h'],
+    boolean: ['p', 'f', 'c', 'v', 'h'],
     alias: {
       p: ['parallel', 'noDeps'],
       f: 'fixWorkspaceDeps',
       c: 'cutWorkspaceDeps',
+      v: 'version',
       h: 'help',
     },
   });
   if (hasField(parse, 'h')) {
     console.log(
       'Usage: bun run tools workspace [options] [command] [args...]\n' +
-        '  -p, --parallel, --noDeps  Run inparallel instead of dependency order.\n' +
+        '  -h, --help                Show this help message.\n' +
+        '  -p, --parallel, --noDeps  Run in parallel instead of dependency order.\n' +
         '  -f, --fixWorkspaceDeps    Set all workspace dependencies to numeric.\n' +
         '  -c, --cutWorkspaceDeps    Set workspace dependencies to generic.\n' +
-        '  -h, --help                Show this help message.\n',
+        '  -v, --version             Bump version of all the packages.\n',
     );
     return 0;
   }
   const setToVersion = hasField(parse, 'f') && parse.f !== false;
   const clearVersion = hasField(parse, 'c') && parse.c !== false;
+  const bumpVersions = hasField(parse, 'v') && parse.v !== false;
   if (setToVersion || clearVersion) {
     await ChangeInternalDeps(setToVersion);
+    return 0;
+  }
+  if (bumpVersions) {
+    // await ChangeVersions(parse._);
     return 0;
   }
 
