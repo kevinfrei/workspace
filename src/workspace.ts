@@ -15,9 +15,9 @@ import {
 } from '@freik/typechk';
 
 type JsonType = { [key: string]: SimpleObject };
-
-// Needed to work around a windows bugs :(
-const execP = promisify(exec);
+type PromiseWaiter = <T>(
+  values: Iterable<T | PromiseLike<T>>,
+) => Promise<Awaited<T>[]>;
 
 // This is used to do workspace-wide things, because Bun (and yarn+lerna+nx) don't bother to consider dev/peer deps as actual dependencies :(
 type Module = {
@@ -30,6 +30,7 @@ type Module = {
   peer?: Set<string>;
   direct?: Set<string>;
 };
+
 type ModuleResolutionNode = Module & {
   dependedOnBy: Set<string>;
   unresolvedRequirements: Set<string>;
@@ -183,7 +184,7 @@ function calcDependencyGraph(modules: Module[]): DependencyGraph {
 // It should probably schedule them at the same time, but if there's a circular
 // dependency, it get's stuck. I think to handle them properly, I'd need to add
 // a peer kind of dependency. I think I'll just punt on that for now.
-async function scheduler(args: string[]): Promise<void> {
+async function scheduler(waiter: PromiseWaiter, args: string[]): Promise<void> {
   const modules = await getModules();
   const moduleMap = new Map<string, Module>(modules.map((m) => [m.name, m]));
   const { ready, providesTo, unresolved } = calcDependencyGraph(modules);
@@ -225,7 +226,7 @@ async function scheduler(args: string[]): Promise<void> {
       }
       // Now wait on all of the remaining resolve tasks (recursion is fun!)
       if (newlyReady.length) {
-        await Promise.all(newlyReady.map((dep) => runTask(dep)));
+        await waiter(newlyReady.map((dep) => runTask(dep)));
       }
     }
   }
@@ -235,8 +236,10 @@ async function scheduler(args: string[]): Promise<void> {
   // scheduling task 1 for it's dependents)
 
   // Seed the recursion with the initially ready tasks.
-  await Promise.all(ready.map((dep) => runTask(dep)));
+  await waiter(ready.map((dep) => runTask(dep)));
 }
+
+const execP = promisify(exec);
 
 async function doit(
   name: string,
@@ -289,23 +292,36 @@ async function ChangeInternalDeps(setToVersion: boolean): Promise<void> {
   );
 }
 
+// This is a serial version of Promise.all, that waits for each promise to complete before moving on.
+async function serialWait<T>(
+  values: Iterable<T | PromiseLike<T>>,
+): Promise<Awaited<T>[]> {
+  const res: Awaited<T>[] = [];
+  for (const v of values) {
+    res.push(await v);
+  }
+  return res;
+}
+
 // TODO: Handle filtering
 export async function workspaceTool(args: string[]): Promise<number> {
   const parse = minimist(args, {
-    boolean: ['p', 'f', 'c', 'v', 'h'],
+    boolean: ['p', 'f', 'c', 'v', 'h', 's'],
     alias: {
       p: ['parallel', 'noDeps'],
+      s: ['serial', 'linear'],
       f: 'fixWorkspaceDeps',
       c: 'cutWorkspaceDeps',
       v: 'version',
       h: 'help',
     },
   });
-  if (hasField(parse, 'h')) {
+  if (hasField(parse, 'h') && parse.h !== false) {
     console.log(
       'Usage: bun run tools workspace [options] [command] [args...]\n' +
         '  -h, --help                Show this help message.\n' +
-        '  -p, --parallel, --noDeps  Run in parallel instead of dependency order.\n' +
+        '  -p, --parallel, --noDeps  Run in  parallel instead of dependency order.\n' +
+        '  -s, --serial, --linear    Run tasks one at a time, respecting dependencies.\n' +
         '  -f, --fixWorkspaceDeps    Set all workspace dependencies to numeric.\n' +
         '  -c, --cutWorkspaceDeps    Set workspace dependencies to generic.\n' +
         '  -v, --version             Bump version of all the packages.\n',
@@ -330,7 +346,9 @@ export async function workspaceTool(args: string[]): Promise<number> {
       modules.map((mod) => doit(mod.name, mod.location, parse._)),
     );
   } else {
-    await scheduler(parse._);
+    const handler: PromiseWaiter =
+      hasField(parse, 's') && parse.s !== false ? serialWait : Promise.all;
+    await scheduler(handler, parse._);
   }
   return 0;
 }
