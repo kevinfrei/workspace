@@ -13,8 +13,11 @@
     "@freik/typechk": "^0.6.2",
     "@types/bun": "^1.1.6",
     "@types/minimist": "^1.2.5",
+    "eslint": "^9.9.0",
+    "eslint-config-prettier": "^9.1.0",
     "husky": "^9.1.4",
-    "minimist": "^1.2.8"
+    "minimist": "^1.2.8",
+    "typescript-eslint": "^8.1.0"
   },
   "peerDependencies": {
     "esbuild": "^0.23.1",
@@ -22,11 +25,18 @@
     "typescript": "^5.5.4"
   },
   "scripts": {
+    "justtest": "bun test",
+    "watch": "bun test --watch",
     "build": "bun build --outdir lib --minify --external prettier --external typescript --external esbuild --target bun src/tools.ts",
     "dbgbuild": "bun build --outdir lib --external prettier --external typescript --external esbuild --target bun src/tools.ts",
     "format": "prettier --write *.json *.md src/**/*.ts",
     "prepare": "husky",
     "prepublishOnly": "bun run build",
-    "types": "tsc --noEmit"
+    "lint": "eslint --fix src",
+    "typechk": "tsc --noEmit",
+    "test": "bun run lint && bun run typechk && bun run justtest"
+  },
+  "engines": {
+    "bun": ">1.0.22"
   }
 }
