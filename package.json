@@ -1,6 +1,6 @@
 {
   "name": "@freik/workspace",
-  "version": "0.5.0",
+  "version": "0.6.1",
   "module": "src/index.ts",
   "type": "module",
   "files": [
@@ -27,11 +27,12 @@
   "scripts": {
     "justtest": "bun test",
     "watch": "bun test --watch",
-    "build": "bun build --outdir lib --minify --external prettier --external typescript --external esbuild --target bun src/tools.ts",
+    "build": "bun build --outdir lib --external prettier --external typescript --external esbuild --target bun src/tools.ts",
     "dbgbuild": "bun build --outdir lib --external prettier --external typescript --external esbuild --target bun src/tools.ts",
     "format": "prettier --write *.json *.md src/**/*.ts",
     "prepare": "husky",
     "prepublishOnly": "bun run build",
+    "pub2npm": "npm publish --access public",
     "lint": "eslint --fix src",
     "typechk": "tsc --noEmit",
     "test": "bun run lint && bun run typechk && bun run justtest"
