@@ -260,6 +260,13 @@ async function doit(
   return name;
 }
 
+async function SavePackage(mod: Module): Promise<void> {
+  await fs.writeFile(
+    path.join(mod.location, 'package.json'),
+    JSON.stringify(mod.packageJson, null, 2) + '\n',
+  );
+}
+
 async function ChangeInternalDeps(setToVersion: boolean): Promise<void> {
   const modules = await getModules();
   const moduleMap = new Map<string, Module>(modules.map((m) => [m.name, m]));
@@ -284,10 +291,8 @@ async function ChangeInternalDeps(setToVersion: boolean): Promise<void> {
       UpdatedDepField(pkg, 'dependencies');
       UpdatedDepField(pkg, 'devDependencies');
       UpdatedDepField(pkg, 'peerDependencies');
-      await fs.writeFile(
-        path.join(mod.location, 'package.json'),
-        JSON.stringify(pkg, null, 2) + '\n',
-      );
+      mod.packageJson = pkg;
+      await SavePackage(mod);
     }),
   );
 }
@@ -303,10 +308,44 @@ async function serialWait<T>(
   return res;
 }
 
+const verPattern = /^major|minor|patch|\d+(\.\d+(\.\d+)?)?$/;
+
+function BumpVersion(version: string, bump: string): string {
+  const parts = version.split('.');
+  if (bump == 'major') {
+    return `${parseInt(parts[0]) + 1}.0.0`;
+  }
+  if (bump == 'minor') {
+    return `${parts[0]}.${parseInt(parts[1]) + 1}.0`;
+  }
+  if (bump == 'patch') {
+    return `${parts[0]}.${parts[1]}.${parseInt(parts[2]) + 1}`;
+  }
+  const split = bump.split('.');
+  if (split.length == 1) {
+    return `${bump}.0.0`;
+  }
+  if (split.length == 2) {
+    return `${bump}.0`;
+  }
+  return bump;
+}
+
+async function ChangeVersions(bumpVersions: string): Promise<void> {
+  const modules = await getModules();
+  await Promise.all(
+    modules.map(async (mod): Promise<void> => {
+      mod.packageJson.version = BumpVersion(mod.version, bumpVersions);
+      await SavePackage(mod);
+    }),
+  );
+}
+
 // TODO: Handle filtering
 export async function workspaceTool(args: string[]): Promise<number> {
   const parse = minimist(args, {
-    boolean: ['p', 'f', 'c', 'v', 'h', 's'],
+    boolean: ['p', 'f', 'c', 'h', 's'],
+    string: ['v'],
     alias: {
       p: ['parallel', 'noDeps'],
       s: ['serial', 'linear'],
@@ -324,19 +363,28 @@ export async function workspaceTool(args: string[]): Promise<number> {
         '  -s, --serial, --linear    Run tasks one at a time, respecting dependencies.\n' +
         '  -f, --fixWorkspaceDeps    Set all workspace dependencies to numeric.\n' +
         '  -c, --cutWorkspaceDeps    Set workspace dependencies to generic.\n' +
-        '  -v, --version             Bump version of all the packages.\n',
+        '  -v, --version <value>     Bump version of all the packages.\n',
+      '                <value>: "patch", "minor", "major", or a specific version number.\n',
     );
     return 0;
   }
   const setToVersion = hasField(parse, 'f') && parse.f !== false;
   const clearVersion = hasField(parse, 'c') && parse.c !== false;
-  const bumpVersions = hasField(parse, 'v') && parse.v !== false;
   if (setToVersion || clearVersion) {
     await ChangeInternalDeps(setToVersion);
     return 0;
   }
-  if (bumpVersions) {
-    // await ChangeVersions(parse._);
+  const bumpVersions = hasStrField(parse, 'v') ? parse.v : '';
+  if (bumpVersions.length) {
+    if (!verPattern.test(bumpVersions)) {
+      console.error('Invalid version value.');
+      console.error(
+        'Valid patterns are: "major", "minor", "patch", or a specific version number.',
+      );
+      console.error('For example: "1.2.3", "2.1", or "4".');
+      return -1;
+    }
+    await ChangeVersions(bumpVersions);
     return 0;
   }
 
