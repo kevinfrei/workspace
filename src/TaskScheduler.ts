@@ -109,5 +109,7 @@ export async function scheduler(
   // sooner (once an root has finished task 1, it can do task 2, while
   // scheduling task 1 for it's dependents)
   // Seed the recursion with the initially ready tasks.
+  console.log('Waiting on', ready);
+  console.log('Task runner', runTask);
   await waiter(ready.map(runTask));
 }
