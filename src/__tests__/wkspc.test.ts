@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'bun:test';
 import { workspaceTool } from '../workspace';
-import { BumpVersion } from '../BumpVersion';
+import { BumpVersion } from '../VersioningTools';
 
 describe('Version Bump Testing', async () => {
   test.each(['files', 'bar.1', '0.1.1.1', 'pitch'])(

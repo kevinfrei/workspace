@@ -1,6 +1,6 @@
 {
   "name": "@freik/workspace",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "module": "src/index.ts",
   "type": "module",
   "files": [
