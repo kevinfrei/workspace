@@ -1,10 +1,5 @@
 import { LoadModules } from './PackageTools';
-import type {
-  Module,
-  DependencyGraph,
-  ModuleResolutionNode,
-  PromiseWaiter,
-} from './types';
+import type { Module, DependencyGraph, ModuleResolutionNode } from './types';
 import { RunTask } from './TaskRunner';
 
 function calcDependencyGraph(modules: Module[]): DependencyGraph {
@@ -52,12 +47,24 @@ function calcDependencyGraph(modules: Module[]): DependencyGraph {
   );
   return { ready: [...ready], providesTo, unresolved: moduleMap };
 }
+
+// This is a serial version of Promise.all, that waits for each promise to complete before moving on.
+async function serialWait<T>(
+  values: Iterable<T | PromiseLike<T>>,
+): Promise<Awaited<T>[]> {
+  const res: Awaited<T>[] = [];
+  for (const v of values) {
+    res.push(await v);
+  }
+  return res;
+}
+
 // This has an issue with peer dependencies.
 // It should probably schedule them at the same time, but if there's a circular
 // dependency, it get's stuck. I think to handle them properly, I'd need to add
 // a peer kind of dependency. I think I'll just punt on that for now.
 export async function scheduler(
-  waiter: PromiseWaiter,
+  serialized: boolean,
   args: string[],
 ): Promise<void> {
   const modules = await LoadModules();
@@ -100,7 +107,8 @@ export async function scheduler(
       }
       // Now wait on all of the remaining resolve tasks (recursion is fun!)
       if (newlyReady.length) {
-        await waiter(newlyReady.map(runTask));
+        const resPromises = newlyReady.map(runTask);
+        await (serialized ? serialWait(resPromises) : Promise.all(resPromises));
       }
     }
   }
@@ -111,5 +119,6 @@ export async function scheduler(
   // Seed the recursion with the initially ready tasks.
   console.log('Waiting on', ready);
   console.log('Task runner', runTask);
-  await waiter(ready.map(runTask));
+  const resPromises = ready.map(runTask);
+  await (serialized ? serialWait(resPromises) : Promise.all(resPromises));
 }

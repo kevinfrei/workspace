@@ -2,20 +2,8 @@ import minimist from 'minimist';
 import { hasField, hasStrField } from '@freik/typechk';
 import { BumpVersion, ChangeInternalDeps, verPattern } from './VersioningTools';
 import { LoadModules, SavePackage } from './PackageTools';
-import type { PromiseWaiter } from './types';
 import { scheduler } from './TaskScheduler';
 import { RunTask } from './TaskRunner';
-
-// This is a serial version of Promise.all, that waits for each promise to complete before moving on.
-async function serialWait<T>(
-  values: Iterable<T | PromiseLike<T>>,
-): Promise<Awaited<T>[]> {
-  const res: Awaited<T>[] = [];
-  for (const v of values) {
-    res.push(await v);
-  }
-  return res;
-}
 
 async function ChangeVersions(bumpVersions: string): Promise<void> {
   const modules = await LoadModules();
@@ -80,9 +68,7 @@ export async function workspaceTool(args: string[]): Promise<number> {
       modules.map((mod) => RunTask(mod.name, mod.location, parse._)),
     );
   } else {
-    const handler: PromiseWaiter =
-      hasField(parse, 's') && parse.s !== false ? serialWait : Promise.all;
-    await scheduler(handler, parse._);
+    await scheduler(hasField(parse, 's') && parse.s !== false, parse._);
   }
   return 0;
 }

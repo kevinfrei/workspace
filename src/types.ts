@@ -2,10 +2,6 @@ import type { SimpleObject } from '@freik/typechk';
 
 export type JsonType = { [key: string]: SimpleObject };
 
-export type PromiseWaiter = <T>(
-  values: Iterable<T | PromiseLike<T>>,
-) => Promise<Awaited<T>[]>;
-
 // This is used to do workspace-wide things, because Bun (and yarn+lerna+nx) don't bother to consider dev/peer deps as actual dependencies :(
 export type Module = {
   name: string;
