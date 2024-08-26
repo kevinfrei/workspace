@@ -1,0 +1,14 @@
+{
+  "name": "test-packages",
+  "type": "module",
+  "version": "0.0.1",
+  "workspaces": [
+    "modules/*"
+  ],
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

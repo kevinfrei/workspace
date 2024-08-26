@@ -1,0 +1,9 @@
+{
+  "name": "submodule0",
+  "module": "index.ts",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "test": "echo submodule0"
+  }
+}

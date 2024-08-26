@@ -1,0 +1,13 @@
+{
+  "name": "submodule7",
+  "module": "index.ts",
+  "type": "module",
+  "version": "0.0.1",
+  "dependencies": {
+    "submodule5:": "workspace:*",
+    "submodule6:": "workspace:*"
+  },
+  "scripts": {
+    "test": "echo submodule7"
+  }
+}

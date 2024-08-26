@@ -45,12 +45,12 @@ export async function workspaceTool(args: string[]): Promise<number> {
     console.log(
       'Usage: bun run tools workspace [options] [command] [args...]\n' +
         '  -h, --help                Show this help message.\n' +
-        '  -p, --parallel, --noDeps  Run in  parallel instead of dependency order.\n' +
+        '  -p, --parallel, --noDeps  Run in parallel instead of dependency order.\n' +
         '  -s, --serial, --linear    Run tasks one at a time, respecting dependencies.\n' +
         '  -f, --fixWorkspaceDeps    Set all workspace dependencies to numeric.\n' +
         '  -c, --cutWorkspaceDeps    Set workspace dependencies to generic.\n' +
-        '  -v, --version <value>     Bump version of all the packages.\n',
-      '                <value>: "patch", "minor", "major", or a specific version number.\n',
+        '  -v, --version <value>     Bump version of all the packages.\n' +
+        '                <value>: "patch", "minor", "major", or a spepcific version.\n',
     );
     return 0;
   }

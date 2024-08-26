@@ -1,6 +1,12 @@
 import { describe, test, expect } from 'bun:test';
 import { workspaceTool } from '../workspace';
 import { BumpVersion } from '../VersioningTools';
+import { beforeAll } from 'bun:test';
+import { $ } from 'bun';
+
+beforeAll(() => {
+  process.chdir('src/__tests__/test-packages');
+});
 
 describe('Version Bump Testing', async () => {
   test.each(['files', 'bar.1', '0.1.1.1', 'pitch'])(
@@ -23,4 +29,13 @@ describe('Version Bump Testing', async () => {
       expect(BumpVersion('1.2.3', input)).toBe(expected);
     },
   );
+});
+
+describe('Workspace Scheduling', async () => {
+  test('No args', async () => {
+    expect(await workspaceTool(['-h'])).toBe(0);
+  });
+  test('serial', async () => {
+    expect(await workspaceTool(['-s', 'run', 'test'])).toBe(0);
+  });
 });
