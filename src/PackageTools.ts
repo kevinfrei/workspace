@@ -1,6 +1,6 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import { $, Glob } from 'bun';
+import { Glob } from 'bun';
 import {
   hasField,
   hasFieldType,
