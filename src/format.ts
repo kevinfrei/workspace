@@ -54,7 +54,7 @@ export async function formatFiles(unparsed: string[]): Promise<number> {
         if (filename === '.prettierrc') {
           return true;
         }
-        return /\.(ts|tsx|js|jsx|md|html|css|json|ejs|mjs|cjs|yml|yaml)$/i.test(
+        return /\.(ts|tsx|java|js|jsx|md|html|css|json|ejs|mjs|cjs|yml|yaml)$/i.test(
           filename,
         );
       },
