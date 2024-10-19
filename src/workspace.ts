@@ -38,7 +38,7 @@ export async function workspaceTool(args: string[]): Promise<number> {
         '  -f, --fixWorkspaceDeps    Set all workspace dependencies to numeric.\n' +
         '  -c, --cutWorkspaceDeps    Set workspace dependencies to generic.\n' +
         '  -v, --version <value>     Bump version of all the packages.\n' +
-        '                <value>: "patch", "minor", "major", or a spepcific version.\n',
+        '                <value>: "patch", "minor", "major", or a specific version number.\n',
     );
     return 0;
   }

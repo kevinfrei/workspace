@@ -19,6 +19,7 @@ export interface NormalOptions {
   staged?: boolean;
   cwd?: string;
   all?: boolean;
+  baseBranch?: string;
 }
 export interface GroupedOptions extends NormalOptions {
   groups: Groups;
@@ -33,6 +34,20 @@ const chkGroupedOptions: typecheck<GroupedOptions> = chkFieldType(
     chkOneOf<FilterFn, RegExp>(isFunction as typecheck<FilterFn>, isRegex),
   ),
 );
+
+function getCommand(options: NormalOptions): string {
+  if (options.staged) {
+    return 'git diff --name-only --diff-filter=ACMR --cached';
+  }
+  if (options.baseBranch) {
+    return `git diff --name-only ${options.baseBranch}`;
+  }
+  if (options.all) {
+    return 'git ls-files';
+  }
+  return 'git diff HEAD --diff-filter=d --name-only';
+}
+
 export async function files(options: GroupedOptions): Promise<GroupedResult>;
 export async function files(options?: NormalOptions): Promise<string[]>;
 
@@ -40,11 +55,7 @@ export async function files(
   ops?: GroupedOptions | NormalOptions,
 ): Promise<GroupedResult | string[]> {
   const options: GroupedOptions | NormalOptions = ops || {};
-  const cmd = options.staged
-    ? 'git diff --diff-filter=ACMR --cached --name-only'
-    : options.all
-      ? 'git ls-files'
-      : 'git diff HEAD --diff-filter=d --name-only';
+  const cmd = getCommand(options);
   const opts = options.cwd
     ? { encoding: 'utf8', cwd: options.cwd }
     : { encoding: 'utf8' };

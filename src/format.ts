@@ -32,8 +32,12 @@ function makeFileLists(files: string[]): string[] {
 
 export async function formatFiles(unparsed: string[]): Promise<number> {
   let pkgmgr = 'yarn';
-  if (unparsed.length === 1) {
-    if (
+  let branch: string | undefined = undefined;
+  while (unparsed.length > 0) {
+    const arg = unparsed.shift();
+    if (arg === '--branch' || (arg === '-b' && unparsed.length > 0)) {
+      branch = unparsed.shift();
+    } else if (
       unparsed[0] === 'npm' ||
       unparsed[0] === 'yarn' ||
       unparsed[0] === 'pnpm' ||
@@ -41,14 +45,11 @@ export async function formatFiles(unparsed: string[]): Promise<number> {
     ) {
       pkgmgr = unparsed[0];
     } else {
-      console.error('Unknown package manager: ' + unparsed[0]);
+      console.error('Unknown package or missing branch: ' + arg);
       return -1;
     }
-  } else if (unparsed.length !== 0) {
-    console.error('Unknown arguments to format');
-    return -1;
   }
-  const files = await Git.files({
+  const options: Git.GroupedOptions = {
     groups: {
       prettier: (filename: string) => {
         if (filename === '.prettierrc') {
@@ -60,7 +61,11 @@ export async function formatFiles(unparsed: string[]): Promise<number> {
       },
       clang: /\.(cpp|c|cc|ino|h|hh|hpp)$/i,
     },
-  });
+  };
+  if (branch) {
+    options.baseBranch = branch;
+  }
+  const files = await Git.files(options);
   await Promise.all([
     formatGroup(
       files.groups.get('prettier'),
