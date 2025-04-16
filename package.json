@@ -1,6 +1,6 @@
 {
   "name": "@freik/workspace",
-  "version": "0.6.4",
+  "version": "0.6.5",
   "module": "src/index.ts",
   "type": "module",
   "files": [
@@ -10,14 +10,14 @@
     "tools": "lib/tools.js"
   },
   "devDependencies": {
-    "@freik/typechk": "^0.6.4",
-    "@types/bun": "^1.1.8",
+    "@freik/typechk": "^0.6.7",
+    "@types/bun": "^1.2.9",
     "@types/minimist": "^1.2.5",
-    "eslint": "^9.9.1",
+    "eslint": "^9.24.0",
     "eslint-config-prettier": "^9.1.0",
-    "husky": "^9.1.5",
+    "husky": "^9.1.7",
     "minimist": "^1.2.8",
-    "typescript-eslint": "^8.3.0"
+    "typescript-eslint": "^8.29.1"
   },
   "peerDependencies": {
     "esbuild": "^0.23.1",
@@ -39,5 +39,8 @@
   },
   "engines": {
     "bun": ">1.0.22"
+  },
+  "dependencies": {
+    "@freik/workspace": "^0.6.4"
   }
 }

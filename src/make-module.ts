@@ -195,14 +195,32 @@ function compile(fileNames: string[], options: ts.CompilerOptions): void {
   */
 }
 
-function genTypes(entryPoints: string[], opts: ModuleArgs): void {
-  compile(entryPoints, {
+async function getCompilerOptions(opts: ModuleArgs): Promise<ts.CompilerOptions> {
+  if (opts.tsconfig) {
+    const tsconfig = opts.tsconfig.replace('{}', 'esm');
+    const configFile = ts.readConfigFile(tsconfig, ts.sys.readFile);
+    if (configFile.error) {
+      throw new Error(
+        `Error reading tsconfig file ${tsconfig}: ${configFile.error.messageText}`,
+      );
+    }
+    const parsedCommandLine = ts.parseJsonConfigFileContent(
+      configFile.config,
+      ts.sys,
+      process.cwd(),
+      {},
+      tsconfig,
+    );
+    return parsedCommandLine.options;
+  }
+  return Promise.resolve({
     declaration: true,
     noEmitOnError: true,
     noImplicitAny: true,
     emitDeclarationOnly: true,
     target: ts.ScriptTarget.ES2020,
     module: ts.ModuleKind.ES2020,
+    lib: ['ES2022'],
     allowJs: true,
     esModuleInterop: true,
     skipLibCheck: true,
@@ -211,6 +229,11 @@ function genTypes(entryPoints: string[], opts: ModuleArgs): void {
     outDir: getOutputDir('d.ts', opts),
     moduleResolution: ts.ModuleResolutionKind.Bundler,
   });
+}
+
+async function genTypes(entryPoints: string[], opts: ModuleArgs): Promise<void> {
+  const tsOptions = await getCompilerOptions(opts);
+  compile(entryPoints, tsOptions);
 }
 // First, transpile the code for ESM and CJS, then use the typescript compiler
 // to generate the .d.ts files as well.
