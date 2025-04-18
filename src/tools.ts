@@ -53,8 +53,8 @@ switch (process.argv[2].toLocaleLowerCase()) {
     break;
 
   default:
-    err('Sorry, unrecognized ftool command!');
+    err('Sorry, unrecognized workspace "tools" command!');
     err('Supported commands:');
-    err('format, linecount, makemodule');
+    err('format, line-count, make-module');
     process.exit(-1);
 }
