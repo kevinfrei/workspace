@@ -17,13 +17,28 @@ async function readJson(filename: string): Promise<JsonType> {
   return JSON.parse(pkg);
 }
 
+function getWorkspaces(jsonPkg: JsonType): string[] {
+  if (!hasField(jsonPkg, 'workspaces')) {
+    throw new Error(
+      'package.json appears to be missing the "workspaces" entry',
+    );
+  }
+  const wksp = jsonPkg.workspaces;
+  if (isArrayOfString(wksp)) {
+    return wksp;
+  }
+  if (hasFieldType(wksp, 'packages', isArrayOfString)) {
+    return wksp.packages;
+  }
+  throw new Error(
+    'workspaces field must be an array of strings, or have a field "packages" as an array of strings.',
+  );
+}
+
 // Get the list of workspaces, and returns the list of matching directories that contain package.json files.
 async function getProjects(): Promise<string[]> {
   const topLevelPkg = await readJson('package.json');
-  if (!hasFieldType(topLevelPkg, 'workspaces', isArrayOfString)) {
-    throw new Error('workspaces field must be an array of strings');
-  }
-  const workspaces = topLevelPkg.workspaces;
+  const workspaces = getWorkspaces(topLevelPkg);
   const res: string[] = [];
   for (const ws of workspaces) {
     const glob = new Glob(ws);

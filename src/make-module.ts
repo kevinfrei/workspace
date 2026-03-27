@@ -195,7 +195,9 @@ function compile(fileNames: string[], options: ts.CompilerOptions): void {
   */
 }
 
-async function getCompilerOptions(opts: ModuleArgs): Promise<ts.CompilerOptions> {
+async function getCompilerOptions(
+  opts: ModuleArgs,
+): Promise<ts.CompilerOptions> {
   if (opts.tsconfig) {
     const tsconfig = opts.tsconfig.replace('{}', 'esm');
     const configFile = ts.readConfigFile(tsconfig, ts.sys.readFile);
@@ -231,7 +233,10 @@ async function getCompilerOptions(opts: ModuleArgs): Promise<ts.CompilerOptions>
   });
 }
 
-async function genTypes(entryPoints: string[], opts: ModuleArgs): Promise<void> {
+async function genTypes(
+  entryPoints: string[],
+  opts: ModuleArgs,
+): Promise<void> {
   const tsOptions = await getCompilerOptions(opts);
   compile(entryPoints, tsOptions);
 }
