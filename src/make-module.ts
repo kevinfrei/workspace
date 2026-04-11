@@ -52,7 +52,7 @@ function getArgs(unparsed: string[]): ModuleArgs {
   }
   if (pa.help) {
     console.log(
-      'Usage: ftool make-module [options] <entrypoint> [entrypoint2] [entrypoint3] ...',
+      'Usage: tools make-module [options] <entrypoint> [entrypoint2] [entrypoint3] ...',
     );
     console.log('Options:');
     console.log('  -e, --esm            Generate ESM output');
