@@ -5,7 +5,8 @@
   "version": "0.0.1",
   "dependencies": {
     "submodule5": "workspace:*",
-    "submodule6": "workspace:*"
+    "submodule6": "workspace:*",
+    "otherDep": "catalog:"
   },
   "scripts": {
     "test": "echo submodule7"

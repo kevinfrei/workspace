@@ -29,7 +29,7 @@
     "watch": "bun test --watch",
     "build": "bun build --outdir lib --external prettier --external typescript --external esbuild --target bun src/tools.ts",
     "dbgbuild": "bun build --outdir lib --external prettier --external typescript --external esbuild --target bun src/tools.ts",
-    "format": "prettier --write *.json *.md src/**/*.ts",
+    "format": "prettier --write *.json *.md src/**/*.ts src/**/*.json",
     "prepare": "husky",
     "prepublishOnly": "bun run build",
     "pub2npm": "npm publish --access public",

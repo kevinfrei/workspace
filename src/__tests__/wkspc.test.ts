@@ -26,3 +26,12 @@ describe('Workspace Scheduling', async () => {
     expect(await workspaceTool(['bun', 'run', 'test'])).toBe(0);
   });
 });
+
+describe('Version Updating stuff', async () => {
+  test('update internal versioning', async () => {
+    expect(await workspaceTool(['-f'])).toBe(0);
+  });
+  test('update internal versioning', async () => {
+    expect(await workspaceTool(['-c'])).toBe(0);
+  });
+});

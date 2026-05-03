@@ -7,6 +7,12 @@
     "submodule5": "workspace:*",
     "submodule6": "workspace:*"
   },
+  "devDependencies": {
+    "devDep": "catalog:dev"
+  },
+  "peerDependencies": {
+    "peerDep": "catalog:peer"
+  },
   "scripts": {
     "test": "echo submodule8"
   }

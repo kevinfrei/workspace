@@ -1,6 +1,6 @@
 import minimist from 'minimist';
 import { hasField, hasStrField } from '@freik/typechk';
-import { BumpVersion, ChangeInternalDeps, verPattern } from './VersioningTools';
+import { BumpVersion, ChangeCatalogs, ChangeInternalDeps, verPattern } from './VersioningTools';
 import { LoadModules, SavePackage } from './PackageTools';
 import { scheduler } from './TaskScheduler';
 import { RunTask } from './TaskRunner';
@@ -46,6 +46,7 @@ export async function workspaceTool(args: string[]): Promise<number> {
   const clearVersion = hasField(parse, 'c') && parse.c !== false;
   if (setToVersion || clearVersion) {
     await ChangeInternalDeps(setToVersion);
+    await ChangeCatalogs(setToVersion);
     return 0;
   }
   const bumpVersions = hasStrField(parse, 'v') ? parse.v : '';

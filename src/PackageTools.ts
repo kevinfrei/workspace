@@ -2,6 +2,7 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { Glob } from 'bun';
 import {
+  chkObjectOf,
   hasField,
   hasFieldType,
   hasStrField,
@@ -33,6 +34,26 @@ function getWorkspaces(jsonPkg: JsonType): string[] {
   throw new Error(
     'workspaces field must be an array of strings, or have a field "packages" as an array of strings.',
   );
+}
+
+function getCatalogs(jsonPkg: JsonType): Record<string, Record<string, string>> {
+  if (!hasField(jsonPkg, 'workspaces')) {
+    throw new Error('Missing "workspaces" entry');
+  }
+  const wksp = jsonPkg.workspaces;
+  const catalogs: Record<string, Record<string, string>> = {};
+  if (isArrayOfString(wksp)){
+    return catalogs;
+  }
+  if (hasFieldType(wksp, 'catalog', isObjectOfString)) {
+    catalogs._default_ = wksp.catalog;
+  }
+  if (hasFieldType(wksp, "catalogs", chkObjectOf(isObjectOfString))) {
+    for (const key of Object.keys(wksp.catalogs)) {
+      catalogs[key] = wksp.catalogs[key];
+    }
+  }
+  return catalogs;
 }
 
 // Get the list of workspaces, and returns the list of matching directories that contain package.json files.
@@ -116,6 +137,11 @@ export async function LoadModules(): Promise<Module[]> {
   // First, load the package.json's from the workspaces
   const pkgFiles = await getProjects();
   return await Promise.all(pkgFiles.map(readModule));
+}
+
+export async function LoadCatalogs(): Promise<Record<string, Record<string, string>>> {
+  const topLevelPkg = await readJson('package.json');
+  return getCatalogs(topLevelPkg);
 }
 
 export async function SavePackage(mod: Module): Promise<void> {
