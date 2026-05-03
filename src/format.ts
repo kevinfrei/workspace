@@ -35,15 +35,15 @@ export async function formatFiles(unparsed: string[]): Promise<number> {
   let branch: string | undefined = undefined;
   while (unparsed.length > 0) {
     const arg = unparsed.shift();
-    if (arg === '--branch' || (arg === '-b' && unparsed.length > 0)) {
+    if ((arg === '--branch' || arg === '-b') && unparsed.length > 0) {
       branch = unparsed.shift();
     } else if (
-      unparsed[0] === 'npm' ||
-      unparsed[0] === 'yarn' ||
-      unparsed[0] === 'pnpm' ||
-      unparsed[0] === 'bun'
+      arg === 'npm' ||
+      arg === 'yarn' ||
+      arg === 'pnpm' ||
+      arg === 'bun'
     ) {
-      pkgmgr = unparsed[0];
+      pkgmgr = arg;
     } else {
       console.error('Unknown package or missing branch: ' + arg);
       return -1;
